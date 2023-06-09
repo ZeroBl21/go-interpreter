@@ -50,7 +50,7 @@ func (p *Parser) nextToken() {
 	p.peekToken = p.l.NextToken()
 }
 
-// ParseProgram parses a program by repeatedly calling parseStatement until the 
+// ParseProgram parses a program by repeatedly calling parseStatement until the
 // end of the input is reached.
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
@@ -73,6 +73,8 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
+	case token.RETURN:
+		return p.parseReturnStatament()
 	default:
 		return nil
 	}
@@ -93,6 +95,20 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	}
 
 	// TODO: We're skipping the expressions until we enconter
+	// a semicolon
+	for !p.curTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return stmt
+}
+
+// parseReturnStatement parses a return statement.
+func (p *Parser) parseReturnStatament() *ast.ReturnStatenment {
+	stmt := &ast.ReturnStatenment{Token: p.curToken}
+
+	p.nextToken()
+	// TODO: Skipping the expressions until encounter
 	// a semicolon
 	for !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()

@@ -4,24 +4,24 @@ import "github.com/ZeroBl21/go-interpreter/token"
 
 // Node represents a node in the AST (Abstract Syntax Tree).
 type Node interface {
-	TokenLiteral() string 
+	TokenLiteral() string
 }
 
 // Statement represents a statement node in the AST.
 type Statement interface {
 	Node
-	statementNode() 
+	statementNode()
 }
 
 // Expression represents an expression node in the AST.
 type Expression interface {
 	Node
-	expressionNode() 
+	expressionNode()
 }
 
 // Program represents a program node in the AST.
 type Program struct {
-	Statements []Statement 
+	Statements []Statement
 }
 
 // TokenLiteral returns the literal value of the first statement's token in the program.
@@ -58,3 +58,15 @@ func (i *Identifier) expressionNode() {}
 
 // TokenLiteral returns the literal value of the Identifier's token.
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
+
+// LetStatement represents a return statement node in the AST.
+type ReturnStatenment struct {
+	Token       token.Token // The Token.RETURN token
+	ReturnValue Expression
+}
+
+// statementNode marks the ReturnStatenment struct as a statement.
+func (rs *ReturnStatenment) statementNode()       {}
+
+// TokenLiteral returns the literal value of the ReturnStatenment's token.
+func (rs *ReturnStatenment) TokenLiteral() string { return rs.Token.Literal }
