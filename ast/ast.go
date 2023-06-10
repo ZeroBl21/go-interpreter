@@ -1,10 +1,15 @@
 package ast
 
-import "github.com/ZeroBl21/go-interpreter/token"
+import (
+	"bytes"
+
+	"github.com/ZeroBl21/go-interpreter/token"
+)
 
 // Node represents a node in the AST (Abstract Syntax Tree).
 type Node interface {
 	TokenLiteral() string
+	String() string
 }
 
 // Statement represents a statement node in the AST.
@@ -34,6 +39,18 @@ func (p *Program) TokenLiteral() string {
 	return ""
 }
 
+// String creates a buffer and writes the return value of each statement’s
+// String() method to it.
+func (p *Program) String() string {
+	var out bytes.Buffer
+
+	for _, s := range p.Statements {
+		out.WriteString(s.String())
+	}
+
+	return out.String()
+}
+
 // LetStatement represents a let statement node in the AST.
 type LetStatement struct {
 	Token token.Token // The token.LET token
@@ -47,6 +64,22 @@ func (ls *LetStatement) statementNode() {}
 // TokenLiteral returns the literal value of the LetStatement's token.
 func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
 
+func (ls *LetStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(ls.TokenLiteral() + " ")
+	out.WriteString(ls.Name.String())
+	out.WriteString(" = ")
+
+	if ls.Value != nil {
+		out.WriteString(ls.Value.String())
+	}
+
+	out.WriteString(";")
+
+	return out.String()
+}
+
 // Identifier represents an identifier node in the AST.
 type Identifier struct {
 	Token token.Token // The token.IDENT token
@@ -59,6 +92,8 @@ func (i *Identifier) expressionNode() {}
 // TokenLiteral returns the literal value of the Identifier's token.
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
 
+func (i *Identifier) String() string { return i.Value }
+
 // LetStatement represents a return statement node in the AST.
 type ReturnStatenment struct {
 	Token       token.Token // The Token.RETURN token
@@ -66,7 +101,37 @@ type ReturnStatenment struct {
 }
 
 // statementNode marks the ReturnStatenment struct as a statement.
-func (rs *ReturnStatenment) statementNode()       {}
+func (rs *ReturnStatenment) statementNode() {}
 
 // TokenLiteral returns the literal value of the ReturnStatenment's token.
 func (rs *ReturnStatenment) TokenLiteral() string { return rs.Token.Literal }
+
+func (rs *ReturnStatenment) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(rs.TokenLiteral() + " ")
+
+	if rs.ReturnValue != nil {
+		out.WriteString(rs.ReturnValue.String())
+	}
+
+	out.WriteString(";")
+
+	return out.String()
+}
+
+type ExpressionStatement struct {
+	Token      token.Token // The first Token of the expression
+	Expression Expression
+}
+
+func (es *ExpressionStatement) statementNode()       {}
+func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
+
+func (es *ExpressionStatement) String() string {
+	if es.Expression != nil {
+		return es.Expression.String()
+	}
+
+	return ""
+}
