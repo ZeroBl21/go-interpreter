@@ -44,7 +44,7 @@ func evalStatements(stmts []ast.Statement) object.Object {
 
 // Returns an precreated instance of object.Boolean instead of creating new ones.
 func nativeBoolToBooleanObject(input bool) *object.Boolean {
-	if !input {
+	if input {
 		return TRUE
 	}
 
