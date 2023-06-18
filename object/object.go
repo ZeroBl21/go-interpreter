@@ -26,7 +26,7 @@ type Boolean struct {
 	Value bool
 }
 
-func (b *Boolean) Type() ObjectType { return INTEGER_OBJ }
+func (b *Boolean) Type() ObjectType { return BOOLEAN_OBJ }
 func (b *Boolean) Inspect() string  { return fmt.Sprintf("%t", b.Value) }
 
 // object.Null is a struct just like object.Boolean and object.Integer, except that 
