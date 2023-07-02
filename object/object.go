@@ -31,7 +31,7 @@ type Object interface {
 	Inspect() string
 }
 
-type Hasheable interface {
+type Hashable interface {
 	HashKey() HashKey
 }
 

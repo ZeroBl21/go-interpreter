@@ -300,7 +300,7 @@ func evalArrayIndexExpression(array, index object.Object) object.Object {
 func evalHashIndexExpression(hash, index object.Object) object.Object {
 	hashObject := hash.(*object.Hash)
 
-	key, ok := index.(object.Hasheable)
+	key, ok := index.(object.Hashable)
 	if !ok {
 		return newError("unusable as hash key: %s", index.Type())
 	}
@@ -358,7 +358,7 @@ func evalHashLiteral(
 			return key
 		}
 
-		hashKey, ok := key.(object.Hasheable)
+		hashKey, ok := key.(object.Hashable)
 		if !ok {
 			return newError("unusable as hash key: %s", key.Type())
 		}
