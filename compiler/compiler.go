@@ -1,6 +1,8 @@
 package compiler
 
 import (
+	"fmt"
+
 	"github.com/ZeroBl21/go-interpreter/ast"
 	"github.com/ZeroBl21/go-interpreter/code"
 	"github.com/ZeroBl21/go-interpreter/object"
@@ -42,6 +44,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 
 		if err := c.Compile(node.Right); err != nil {
 			return err
+		}
+
+		switch node.Operator {
+		case "+":
+			c.emit(code.OpAdd)
+		default:
+			return fmt.Errorf("unknown operator %s", node.Operator)
 		}
 
 	case *ast.IntegerLiteral:
