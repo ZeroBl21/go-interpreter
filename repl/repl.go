@@ -5,13 +5,17 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/ZeroBl21/go-interpreter/evaluator"
+	"github.com/ZeroBl21/go-interpreter/compiler"
 	"github.com/ZeroBl21/go-interpreter/lexer"
-	"github.com/ZeroBl21/go-interpreter/object"
 	"github.com/ZeroBl21/go-interpreter/parser"
+	"github.com/ZeroBl21/go-interpreter/vm"
 )
 
-const PROMPT = ">> "
+const (
+	RESET  = "\033[0m"
+	BLUE   = "\033[34m"
+	PROMPT = BLUE + ">> " + RESET
+)
 
 const MONKEY_FACE = `            __,__
    .--.  .-"     "-.  .--.
@@ -28,7 +32,6 @@ const MONKEY_FACE = `            __,__
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
-	env := object.NewEnvironment()
 
 	for {
 		fmt.Fprintf(out, PROMPT)
@@ -47,12 +50,22 @@ func Start(in io.Reader, out io.Writer) {
 			continue
 		}
 
-		evaluated := evaluator.Eval(program, env)
-		if evaluated != nil {
-			io.WriteString(out, evaluated.Inspect())
-			io.WriteString(out, "\n")
+		comp := compiler.New()
+		if err := comp.Compile(program); err != nil {
+			fmt.Fprintf(out, "Woops! Compilation failed:\n %s\n",
+				err)
+			continue
 		}
 
+		machine := vm.New(comp.Bytecode())
+		if err := machine.Run(); err != nil {
+			fmt.Fprintf(out, "Woops! Executing bytecode failed:\n%s\n",
+				err)
+		}
+
+		lastPopped := machine.LastPoppedStackElem()
+		io.WriteString(out, lastPopped.Inspect())
+		io.WriteString(out, "\n")
 	}
 }
 
