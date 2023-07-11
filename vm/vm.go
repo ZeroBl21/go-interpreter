@@ -72,6 +72,16 @@ func (vm *VM) Run() error {
 			if err := vm.executeComparison(op); err != nil {
 				return err
 			}
+
+		case code.OpBang:
+			if err := vm.executeBangOperator(); err != nil {
+				return err
+			}
+
+		case code.OpMinus:
+			if err := vm.executeMinusOperator(); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -108,7 +118,7 @@ func (vm *VM) executeBinaryOperation(op code.Opcode) error {
 		return vm.executeBinaryIntegerOperation(op, left, right)
 	}
 
-	return fmt.Errorf("unsuppoerted types for binary operations: %s %s",
+	return fmt.Errorf("unsupported type for binary operations: %s %s",
 		leftType, rightType)
 }
 
@@ -174,6 +184,31 @@ func (vm *VM) executeIntegerComparison(
 	default:
 		return fmt.Errorf("unknown operator: %d", op)
 	}
+}
+
+func (vm *VM) executeBangOperator() error {
+	operand := vm.pop()
+
+	switch operand {
+	case True:
+		return vm.push(False)
+	case False:
+		return vm.push(True)
+	default:
+		return vm.push(False)
+	}
+}
+
+func (vm *VM) executeMinusOperator() error {
+	operand := vm.pop()
+
+	if operand.Type() != object.INTEGER_OBJ {
+		return fmt.Errorf("unsupported type for negativon: %s",
+			operand.Type())
+	}
+
+	value := operand.(*object.Integer).Value
+	return vm.push(&object.Integer{Value: -value})
 }
 
 func nativeBoolToBooleanObject(input bool) *object.Boolean {
