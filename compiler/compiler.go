@@ -19,6 +19,8 @@ type Compiler struct {
 
 	lastInstruction     EmittedInstruction
 	previousInstruction EmittedInstruction
+
+	symbolTable *SymbolTable
 }
 
 // New creates a new Lexer instance.
@@ -29,11 +31,14 @@ func New() *Compiler {
 
 		lastInstruction:     EmittedInstruction{},
 		previousInstruction: EmittedInstruction{},
+
+		symbolTable: NewSymbolTable(),
 	}
 }
 
 func (c *Compiler) Compile(node ast.Node) error {
 	switch node := node.(type) {
+	// Statements
 	case *ast.Program:
 		for _, s := range node.Statements {
 			err := c.Compile(s)
@@ -56,6 +61,21 @@ func (c *Compiler) Compile(node ast.Node) error {
 			}
 		}
 
+	case *ast.LetStatement:
+		if err := c.Compile(node.Value); err != nil {
+			return err
+		}
+		symbol := c.symbolTable.Define(node.Name.Value)
+		c.emit(code.OpSetGlobal, symbol.Index)
+
+	case *ast.Identifier:
+		symbol, ok := c.symbolTable.Resolve(node.Value)
+		if !ok {
+			return fmt.Errorf("undefined variable %s", node.Value)
+		}
+		c.emit(code.OpGetGlobal, symbol.Index)
+
+		// Expressions
 	case *ast.InfixExpression:
 		if node.Operator == "<" {
 			if err := c.Compile(node.Right); err != nil {
