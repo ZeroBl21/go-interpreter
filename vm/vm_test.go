@@ -40,6 +40,16 @@ func TestIntegerArithmetic(t *testing.T) {
 	runVmTests(t, tests)
 }
 
+func TestStringExpressions(t *testing.T) {
+	tests := []vmTestCase{
+		{`"monkey"`, "monkey"},
+		{`"mon" + "key"`, "monkey"},
+		{`"mon" + "key" + "banana"`, "monkeybanana"},
+	}
+
+	runVmTests(t, tests)
+}
+
 func TestBooleanExpressions(t *testing.T) {
 	tests := []vmTestCase{
 		{"true", true},
@@ -141,6 +151,11 @@ func testExpectedObject(
 		if err != nil {
 			t.Errorf("testIntegerObject failed: %s", err)
 		}
+  case string: 
+		err := testStringObject(expected, actual)
+		if err != nil {
+			t.Errorf("testStringObject failed: %s", err)
+		}
 	case bool:
 		err := testBooleanObject(bool(expected), actual)
 		if err != nil {
@@ -163,6 +178,21 @@ func testIntegerObject(expect int64, actual object.Object) error {
 
 	if result.Value != expect {
 		return fmt.Errorf("object has wrong value. got=%d want=%d",
+			result.Value, expect)
+	}
+
+	return nil
+}
+
+func testStringObject(expect string, actual object.Object) error {
+	result, ok := actual.(*object.String)
+	if !ok {
+		return fmt.Errorf("object is not String. got=%T (%+v)",
+			actual, actual)
+	}
+
+	if result.Value != expect {
+		return fmt.Errorf("object has wrong value. got=%s want=%s",
 			result.Value, expect)
 	}
 
