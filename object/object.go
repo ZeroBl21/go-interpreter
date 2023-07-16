@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ZeroBl21/go-interpreter/ast"
+	"github.com/ZeroBl21/go-interpreter/code"
 )
 
 type ObjectType string
@@ -24,6 +25,8 @@ const (
 
 	BUILTIN_OBJ = "BUILTIN"
 	HASH_OBJ    = "HASH"
+
+	COMPILED_FUNCTION_OBJ = "COMPILED_FUNCTION_OBJ"
 )
 
 type Object interface {
@@ -158,6 +161,15 @@ type Builtin struct {
 
 func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
 func (b *Builtin) Inspect() string  { return "builtin function" }
+
+type CompiledFunction struct {
+	Instructions code.Instructions
+}
+
+func (cf *CompiledFunction) Type() ObjectType { return COMPILED_FUNCTION_OBJ }
+func (cf *CompiledFunction) Inspect() string {
+	return fmt.Sprintf("CompiledFunction[%p]", cf)
+}
 
 type Hash struct {
 	Pairs map[HashKey]HashPair
