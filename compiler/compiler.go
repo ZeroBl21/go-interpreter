@@ -85,6 +85,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 		symbol := c.symbolTable.Define(node.Name.Value)
 		c.emit(code.OpSetGlobal, symbol.Index)
 
+	case *ast.ReturnStatenment:
+		if err := c.Compile(node.ReturnValue); err != nil {
+			return err
+		}
+
+		c.emit(code.OpReturnValue)
+
 	case *ast.Identifier:
 		symbol, ok := c.symbolTable.Resolve(node.Value)
 		if !ok {
@@ -160,7 +167,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 
-		if c.lastInstructionIsPop() {
+		if c.lastInstructionIs(code.OpPop) {
 			c.removeLastPop()
 		}
 
@@ -177,7 +184,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 				return err
 			}
 
-			if c.lastInstructionIsPop() {
+			if c.lastInstructionIs(code.OpPop) {
 				c.removeLastPop()
 			}
 		}
@@ -195,6 +202,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 		}
 
 		c.emit(code.OpIndex)
+
+	case *ast.CallExpression:
+		if err := c.Compile(node.Function); err != nil {
+			return err
+		}
+
+		c.emit(code.OpCall)
 
 	case *ast.IntegerLiteral:
 		integer := &object.Integer{Value: node.Value}
@@ -240,6 +254,24 @@ func (c *Compiler) Compile(node ast.Node) error {
 
 		c.emit(code.OpHash, len(node.Pairs)*2)
 
+	case *ast.FunctionLiteral:
+		c.enterScope()
+
+		if err := c.Compile(node.Body); err != nil {
+			return err
+		}
+
+		if c.lastInstructionIs(code.OpPop) {
+			c.replaceLastPopWithReturn()
+		}
+		if !c.lastInstructionIs(code.OpReturnValue) {
+			c.emit(code.OpReturn)
+		}
+
+		instructions := c.leaveScope()
+
+		compiledFn := &object.CompiledFunction{Instructions: instructions}
+		c.emit(code.OpConstant, c.addConstant(compiledFn))
 	}
 
 	return nil
@@ -283,7 +315,7 @@ func (c *Compiler) addInstructions(ins []byte) int {
 	return posNewInstruction
 }
 
-// replaceInstruction to replace an instruction at an arbitrary offset
+// replaceInstruction: Replace an instruction at an arbitrary offset
 // in the instructions slice
 func (c *Compiler) replaceInstruction(pos int, NewInstruction []byte) {
 	ins := c.currentInstructions()
@@ -301,8 +333,12 @@ func (c *Compiler) setLastInstruction(op code.Opcode, pos int) {
 	c.scopes[c.scopeIndex].lastInstruction = last
 }
 
-func (c *Compiler) lastInstructionIsPop() bool {
-	return c.scopes[c.scopeIndex].lastInstruction.Opcode == code.OpPop
+func (c *Compiler) lastInstructionIs(op code.Opcode) bool {
+	if len(c.currentInstructions()) == 0 {
+		return false
+	}
+
+	return c.scopes[c.scopeIndex].lastInstruction.Opcode == op
 }
 
 func (c *Compiler) removeLastPop() {
@@ -340,6 +376,13 @@ func (c *Compiler) leaveScope() code.Instructions {
 	c.scopeIndex--
 
 	return instructions
+}
+
+func (c *Compiler) replaceLastPopWithReturn() {
+	lastPos := c.scopes[c.scopeIndex].lastInstruction.Position
+	c.replaceInstruction(lastPos, code.Make(code.OpReturnValue))
+
+	c.scopes[c.scopeIndex].lastInstruction.Opcode = code.OpReturnValue
 }
 
 type Bytecode struct {

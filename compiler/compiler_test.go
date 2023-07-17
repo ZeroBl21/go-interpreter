@@ -428,7 +428,7 @@ func TestIndexExpressions(t *testing.T) {
 func TestFunctions(t *testing.T) {
 	tests := []compilerTestCase{
 		{
-			input: `fn() { return 5 + 10}`,
+			input: `fn() { return 5 + 10 }`,
 			expectedConstants: []any{
 				5,
 				10,
@@ -443,6 +443,91 @@ func TestFunctions(t *testing.T) {
 				code.Make(code.OpConstant, 2),
 				code.Make(code.OpPop),
 			},
+		},
+		{
+			input: `fn() { 5 + 10 }`,
+			expectedConstants: []any{
+				5,
+				10,
+				[]code.Instructions{
+					code.Make(code.OpConstant, 0),
+					code.Make(code.OpConstant, 1),
+					code.Make(code.OpAdd),
+					code.Make(code.OpReturnValue),
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 2),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `fn() { 1; 2 }`,
+			expectedConstants: []any{
+				1,
+				2,
+				[]code.Instructions{
+					code.Make(code.OpConstant, 0),
+					code.Make(code.OpPop),
+					code.Make(code.OpConstant, 1),
+					code.Make(code.OpReturnValue),
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 2),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `fn() { }`,
+			expectedConstants: []any{
+				[]code.Instructions{
+					code.Make(code.OpReturn),
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpPop),
+			},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
+func TestFunctionsCalls(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `fn() { 24 }()`,
+			expectedConstants: []any{
+				24,
+				[]code.Instructions{
+					code.Make(code.OpConstant, 0), // 24
+					code.Make(code.OpReturnValue),
+				},
+			},
+      expectedInstructions: []code.Instructions{
+        code.Make(code.OpConstant, 1), // the function
+        code.Make(code.OpCall),
+        code.Make(code.OpPop),
+      },
+		},
+		{
+			input: `let noArg = fn() { 24 }()`,
+			expectedConstants: []any{
+				24,
+				[]code.Instructions{
+					code.Make(code.OpConstant, 0),
+					code.Make(code.OpReturnValue),
+				},
+			},
+      expectedInstructions: []code.Instructions{
+        code.Make(code.OpConstant, 1), // the function
+        code.Make(code.OpSetGlobal, 0),
+        code.Make(code.OpGetGlobal, 0),
+        code.Make(code.OpCall),
+        code.Make(code.OpPop),
+      },
 		},
 	}
 
