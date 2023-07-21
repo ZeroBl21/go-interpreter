@@ -218,7 +218,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 
-		c.emit(code.OpCall)
+		for _, a := range node.Arguments {
+			if err := c.Compile(a); err != nil {
+				return err
+			}
+		}
+
+		c.emit(code.OpCall, len(node.Arguments))
 
 	case *ast.IntegerLiteral:
 		integer := &object.Integer{Value: node.Value}
@@ -278,13 +284,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 			c.emit(code.OpReturn)
 		}
 
-    numLocals := c.symbolTable.numDefinitions
-    instructions := c.leaveScope()
+		numLocals := c.symbolTable.numDefinitions
+		instructions := c.leaveScope()
 
 		compiledFn := &object.CompiledFunction{
-      Instructions: instructions,
-      NumLocals: numLocals,
-    }
+			Instructions: instructions,
+			NumLocals:    numLocals,
+		}
 		c.emit(code.OpConstant, c.addConstant(compiledFn))
 
 	}
