@@ -5,8 +5,8 @@ import (
 )
 
 var builtins = map[string]*object.Builtin{
-	"print": object.GetBuiltinByName("print"),
 	"len":   object.GetBuiltinByName("len"),
+	"print": object.GetBuiltinByName("print"),
 	"first": object.GetBuiltinByName("first"),
 	"last": object.GetBuiltinByName("last"),
 	"rest": object.GetBuiltinByName("rest"),
