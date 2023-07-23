@@ -37,6 +37,9 @@ func Start(in io.Reader, out io.Writer) {
 	constants := []object.Object{}
 	globals := make([]object.Object, vm.GlobalSize)
 	symbolTable := compiler.NewSymbolTable()
+	for i, v := range object.Builtins {
+		symbolTable.DefineBuiltin(i, v.Name)
+	}
 
 	for {
 		fmt.Fprintf(out, PROMPT)
@@ -62,8 +65,8 @@ func Start(in io.Reader, out io.Writer) {
 			continue
 		}
 
-    code := comp.Bytecode()
-    constants = code.Constants
+		code := comp.Bytecode()
+		constants = code.Constants
 
 		machine := vm.NewWithGlobalsStore(code, globals)
 		if err := machine.Run(); err != nil {
